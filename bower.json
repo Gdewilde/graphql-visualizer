@@ -1,0 +1,29 @@
+{
+  "name": "graphql-visualizer",
+  "homepage": "https://github.com/NathanRSmith/graphql-visualizer",
+  "authors": [
+    "Nathan Smith <nathanrandal@gmail.com>"
+  ],
+  "description": "",
+  "main": "index.html",
+  "moduleType": [],
+  "license": "MIT",
+  "private": true,
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "resolutions": {
+    "lodash": "^3.10.0"
+  },
+  "dependencies": {
+    "graphlib-dot": "^0.6.2",
+    "dagre-d3": "^0.4.17",
+    "lodash": "^4.6.1",
+    "bootstrap": "^3.3.6",
+    "jquery": "^2.2.1"
+  }
+}

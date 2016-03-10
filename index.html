@@ -1,0 +1,141 @@
+<html>
+<head>
+<style>
+  body {
+    text-align: center;
+  }
+  body>p {
+    margin: 0 20%;
+  }
+  #introspection-query {
+    margin: 0 20%;
+    text-align: left;
+    overflow: auto;
+    max-height: 300px;
+  }
+  #introspection-result {
+    margin: 0 20%;
+    text-align: left;
+    overflow: auto;
+    height: 300px;
+    width: 60%;
+  }
+  #introspection-visualization {
+    width: 100%;
+  }
+</style>
+<link rel="stylesheet" href="bower_components/bootstrap/dist/css/bootstrap.min.css">
+</head>
+<body>
+  <!-- Intro -->
+  <h1>GraphQL Visualizer</h1>
+
+  <p class="lead">
+    Run the introspection query against a GraphQL endpoint. Paste the result into the textarea below to view the entity relationships.
+  </p>
+
+  <!-- Introspection Query -->
+  <h2>Introspection Query</h2>
+  <pre id="introspection-query">query IntrospectionQuery {
+  __schema {
+    queryType {
+      name
+    }
+    mutationType {
+      name
+    }
+    subscriptionType {
+      name
+    }
+    types {
+      ...FullType
+    }
+    directives {
+      name
+      description
+      args {
+        ...InputValue
+      }
+      onOperation
+      onFragment
+      onField
+    }
+  }
+}
+
+fragment FullType on __Type {
+  kind
+  name
+  description
+  fields(includeDeprecated: true) {
+    name
+    description
+    args {
+      ...InputValue
+    }
+    type {
+      ...TypeRef
+    }
+    isDeprecated
+    deprecationReason
+  }
+  inputFields {
+    ...InputValue
+  }
+  interfaces {
+    ...TypeRef
+  }
+  enumValues(includeDeprecated: true) {
+    name
+    description
+    isDeprecated
+    deprecationReason
+  }
+  possibleTypes {
+    ...TypeRef
+  }
+}
+
+fragment InputValue on __InputValue {
+  name
+  description
+  type {
+    ...TypeRef
+  }
+  defaultValue
+}
+
+fragment TypeRef on __Type {
+  kind
+  name
+  ofType {
+    kind
+    name
+    ofType {
+      kind
+      name
+      ofType {
+        kind
+        name
+      }
+    }
+  }
+}</pre>
+
+  <!-- Introspection Result -->
+  <h2>Introspection Result</h2>
+  <textarea id="introspection-result" class="form-control"></textarea>
+
+  <!-- Graph Viz -->
+  <h2>Introspection Visualization</h2>
+  <div id="introspection-visualization">
+  </div>
+
+  <!-- Download Options -->
+
+
+<script type="text/javascript">
+
+</script>
+</body>
+</html>
