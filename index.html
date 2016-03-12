@@ -7,6 +7,13 @@
   body>p {
     margin: 0 20%;
   }
+  #intro {
+    background: #2d2d2d;
+    color: #f8f8f8;
+  }
+  #intro h1 {
+    color: #E535AB;
+  }
   #introspection-query {
     margin: 0 20%;
     text-align: left;
@@ -23,16 +30,25 @@
   #introspection-visualization {
     width: 100%;
   }
+  #introspection-visualization>svg {
+    width: 100%;
+    height: auto;
+  }
+  #download-section {
+    max-width: 400px;
+  }
 </style>
 <link rel="stylesheet" href="bower_components/bootstrap/dist/css/bootstrap.min.css">
 </head>
 <body>
   <!-- Intro -->
-  <h1>GraphQL Visualizer</h1>
+  <div id="intro" class="jumbotron">
+    <h1>GraphQL Visualizer</h1>
 
-  <p class="lead">
-    Run the introspection query against a GraphQL endpoint. Paste the result into the textarea below to view the entity relationships.
-  </p>
+    <p class="lead">
+      Run the introspection query against a GraphQL endpoint. Paste the result into the textarea below to view the entity relationships.
+    </p>
+  </div>
 
   <!-- Introspection Query -->
   <h2>Introspection Query</h2>
@@ -128,14 +144,118 @@ fragment TypeRef on __Type {
 
   <!-- Graph Viz -->
   <h2>Introspection Visualization</h2>
-  <div id="introspection-visualization">
-  </div>
+  <div id="introspection-error" class="alert alert-danger" role="alert" style="display: none;"></div>
+
+  <div id="introspection-visualization"></div>
 
   <!-- Download Options -->
+  <h2>Download</h2>
+  <div id="download-section" class="well center-block">
+    <button id="download-dot" type="button" class="btn btn-primary btn-lg btn-block">dotfile</button>
+    <button id="download-svg" type="button" class="btn btn-primary btn-lg btn-block">svg</button>
+    <!-- <button id="download-png" type="button" class="btn btn-primary btn-lg btn-block">png</button> -->
+    <button id="download-xdot" type="button" class="btn btn-primary btn-lg btn-block">xdot</button>
+    <button id="download-plain" type="button" class="btn btn-primary btn-lg btn-block">plain</button>
+    <button id="download-ps" type="button" class="btn btn-primary btn-lg btn-block">ps</button>
+  </div>
+
+  <!-- FAQ -->
+  <h2>FAQ</h2>
 
 
+<script type="text/javascript" src="bower_components/jquery/dist/jquery.min.js"></script>
+<script type="text/javascript" src="bower_components/lodash/lodash.min.js"></script>
+<script type="text/javascript" src="bower_components/viz.js/viz.js"></script>
+<script type="text/javascript" src="js/fixture.js"></script>
+<script type="text/javascript" src="js/build-dot.js"></script>
 <script type="text/javascript">
+  var dotfile;
+  var schema;
 
+
+  // render the svg when the result changes
+  $('#introspection-result').change(function() {
+    $('#introspection-error').hide();
+    dotfile = undefined;
+    schema = undefined;
+    $('#introspection-visualization').empty();
+    try {
+      schema = JSON.parse($(this).val());
+      dotfile = buildDot(schema);
+
+      $('#introspection-visualization').html(Viz(dotfile));
+    }
+    catch(err) {
+      $('#introspection-error').html(err.message).show();
+    }
+  });
+
+
+  var DOWNLOADS = {
+    '#download-dot': {
+      viz_format: 'dot',
+      extension: 'graphviz',
+    },
+    '#download-svg': {
+      viz_format: 'svg',
+      extension: 'svg',
+    },
+    '#download-xdot': {
+      viz_format: 'xdot',
+      extension: 'xdot',
+    },
+    '#download-plain': {
+      viz_format: 'plain',
+      extension: 'txt',
+    },
+    '#download-ps': {
+      viz_format: 'ps',
+      extension: 'ps',
+    }
+  }
+
+  // set up download button click handlers
+  _.each(DOWNLOADS, function(v, k) {
+    $(k).click(function() {
+      if(!dotfile) return alert('Please provide a valid introspection.');
+      if(v.viz_format == 'dot') return download('graphql-erd.'+v.extension, dotfile);
+      download('graphql-erd.'+v.extension, Viz(dotfile, {format: v.viz_format}), v.enc);
+    })
+  })
+
+  // '#download-png': {
+  //   viz_format: 'png-image-element',
+  //   extension: 'png',
+  //   enc: 'data:image/png;base64'
+  // }
+  $('#download-png').click(function() {
+    if(!dotfile) return alert('Please provide a valid introspection.');
+    var canvas = document.createElement('canvas');
+    var context = canvas.getContext('2d');
+    var img = Viz(dotfile, {format: 'png-image-element'});
+    context.drawImage(img, 0, 0 );
+    var myData = context.getImageData(0, 0, canvas.width, canvas.height);
+    download('graphql-erd.png', myData, 'data:image/png;base64');
+    canvas = null;
+  });
+
+  // trigger a download
+  function download(filename, text, enc) {
+    enc = enc || 'data:text/plain;charset=utf-8';
+    var element = document.createElement('a');
+    element.setAttribute('href', enc+',' + encodeURIComponent(text));
+    element.setAttribute('download', filename);
+
+    element.style.display = 'none';
+    document.body.appendChild(element);
+
+    element.click();
+
+    document.body.removeChild(element);
+  }
+
+
+  $('#introspection-result').val(JSON.stringify(SCHEMA_FIXTURE, null, 2)).change();
 </script>
 </body>
 </html>
