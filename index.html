@@ -153,11 +153,12 @@ fragment TypeRef on __Type {
   <div id="download-section" class="well center-block">
     <button id="download-dot" type="button" class="btn btn-primary btn-lg btn-block">dotfile</button>
     <button id="download-svg" type="button" class="btn btn-primary btn-lg btn-block">svg</button>
-    <!-- <button id="download-png" type="button" class="btn btn-primary btn-lg btn-block">png</button> -->
+    <button id="download-png" type="button" class="btn btn-primary btn-lg btn-block">png</button>
     <button id="download-xdot" type="button" class="btn btn-primary btn-lg btn-block">xdot</button>
     <button id="download-plain" type="button" class="btn btn-primary btn-lg btn-block">plain</button>
     <button id="download-ps" type="button" class="btn btn-primary btn-lg btn-block">ps</button>
   </div>
+  <div id="png-renderer" style="display: none;"></div>
 
   <!-- FAQ -->
   <h2>FAQ</h2>
@@ -195,6 +196,9 @@ fragment TypeRef on __Type {
     '#download-dot': {
       viz_format: 'dot',
       extension: 'graphviz',
+      handler: function(dotfile, opts) {
+        return download('graphql-erd.'+opts.extension, dotfile);
+      }
     },
     '#download-svg': {
       viz_format: 'svg',
@@ -211,6 +215,24 @@ fragment TypeRef on __Type {
     '#download-ps': {
       viz_format: 'ps',
       extension: 'ps',
+    },
+    '#download-png': {
+      viz_format: 'png-image-element',
+      extension: 'png',
+      enc: 'data:image/png;base64',
+      handler: function(dotfile, opts) {
+        var image = Viz(dotfile, {format: opts.viz_format});
+
+        // gotta wait for the page to figure out the data...
+        $('#png-renderer').html(image);
+        setTimeout(function() {
+          // might be too big for dataurl, so use blob
+          var blob = b64toBlob(image.src.split(',')[1], 'image/png');
+          var blobUrl = URL.createObjectURL(blob);
+
+          download('graphql-erd.png', null, blobUrl);
+        }, 0);
+      }
     }
   }
 
@@ -218,32 +240,16 @@ fragment TypeRef on __Type {
   _.each(DOWNLOADS, function(v, k) {
     $(k).click(function() {
       if(!dotfile) return alert('Please provide a valid introspection.');
-      if(v.viz_format == 'dot') return download('graphql-erd.'+v.extension, dotfile);
-      download('graphql-erd.'+v.extension, Viz(dotfile, {format: v.viz_format}), v.enc);
+      if(v.handler) return v.handler(dotfile, v);
+      download('graphql-erd.'+v.extension, Viz(dotfile, {format: v.viz_format}));
     })
   })
 
-  // '#download-png': {
-  //   viz_format: 'png-image-element',
-  //   extension: 'png',
-  //   enc: 'data:image/png;base64'
-  // }
-  $('#download-png').click(function() {
-    if(!dotfile) return alert('Please provide a valid introspection.');
-    var canvas = document.createElement('canvas');
-    var context = canvas.getContext('2d');
-    var img = Viz(dotfile, {format: 'png-image-element'});
-    context.drawImage(img, 0, 0 );
-    var myData = context.getImageData(0, 0, canvas.width, canvas.height);
-    download('graphql-erd.png', myData, 'data:image/png;base64');
-    canvas = null;
-  });
-
   // trigger a download
-  function download(filename, text, enc) {
-    enc = enc || 'data:text/plain;charset=utf-8';
+  function download(filename, text, data) {
     var element = document.createElement('a');
-    element.setAttribute('href', enc+',' + encodeURIComponent(text));
+    if(data) element.setAttribute('href', data);
+    else element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
     element.setAttribute('download', filename);
 
     element.style.display = 'none';
@@ -252,6 +258,31 @@ fragment TypeRef on __Type {
     element.click();
 
     document.body.removeChild(element);
+  }
+
+  // http://stackoverflow.com/a/16245768/898830
+  function b64toBlob(b64Data, contentType, sliceSize) {
+    contentType = contentType || '';
+    sliceSize = sliceSize || 512;
+
+    var byteCharacters = atob(b64Data);
+    var byteArrays = [];
+
+    for (var offset = 0; offset < byteCharacters.length; offset += sliceSize) {
+        var slice = byteCharacters.slice(offset, offset + sliceSize);
+
+        var byteNumbers = new Array(slice.length);
+        for (var i = 0; i < slice.length; i++) {
+            byteNumbers[i] = slice.charCodeAt(i);
+        }
+
+        var byteArray = new Uint8Array(byteNumbers);
+
+        byteArrays.push(byteArray);
+    }
+
+    var blob = new Blob(byteArrays, {type: contentType});
+    return blob;
   }
 
 
