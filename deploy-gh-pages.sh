@@ -1,7 +1,9 @@
-if [ -d "_build" ]; then
-  rm -rf _build
+if [ -d ".build" ]; then
+  rm -rf .build
 fi
-mkdir _build
+mkdir .build
 
-cp -r * _build/
-ghp-import -np _build
+cp -r * .build/
+ghp-import -np .build
+
+rm -rf .build
