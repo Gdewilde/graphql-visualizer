@@ -209,7 +209,7 @@ fragment TypeRef on __Type {
     $('#introspection-visualization').empty();
     try {
       schema = JSON.parse($(this).val());
-      dotfile = buildDot(schema);
+      dotfile = buildDot(schema, {});
 
       $('#introspection-visualization').html(Viz(dotfile));
     }
